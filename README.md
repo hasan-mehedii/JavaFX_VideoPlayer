@@ -49,8 +49,8 @@ A simple yet powerful music and video player application built with **JavaFX**. 
 ## 🧑‍💻 Author
    - **Mehedi Hasan**
       - 🏫 Undergraduate Student, CSE Department, University of Dhaka
-      - 📧 Email: your-email@example.com
-      - 🌐 GitHub: github.com/your-github
+      - 📧 Email: (mehedi-2022415897@cs.du.ac.bd)
+      - 🌐 GitHub: (github.com/hasan-mehedii)
 
      
 
