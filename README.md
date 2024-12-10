@@ -19,9 +19,9 @@ A simple yet powerful music and video player application built with **JavaFX**. 
 
 ## 🖼️ Screenshots
  - **Welcome Page:**
-     [Start](images/start.png)
+     [!Start](images/start.png)
 - **Player:**
-     [play](images/play.png)
+     [!play](images/play.png)
    
 ---
 
