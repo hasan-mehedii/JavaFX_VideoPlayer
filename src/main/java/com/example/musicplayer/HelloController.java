@@ -2,6 +2,7 @@ package com.example.musicplayer;
 
 import javafx.fxml.FXML;
 import javafx.event.ActionEvent;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.Slider;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
@@ -22,154 +23,133 @@ public class HelloController {
     private Slider volumeSlider;
 
     @FXML
+    private Slider progressSlider;
+
+    @FXML
+    private Slider scaleSlider; // Slider to control scale
+
+    @FXML
     void openSongMenu(ActionEvent event) {
-        try {
-            FileChooser chooser = new FileChooser();
-            File file = chooser.showOpenDialog(null);
+        FileChooser chooser = new FileChooser();
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Video Files", "*.mp4", "*.m4v", "*.mov"));
+        File file = chooser.showOpenDialog(null);
 
-            if (file != null) {
-                System.out.println("File selected: " + file.getAbsolutePath()); // Debugging file path
-                // Load the media but don't play it automatically
-                Media media = new Media(file.toURI().toString());
-                player = new MediaPlayer(media);
-                mediaView.setMediaPlayer(player); // Make sure this is being set
-
-                // Link volume control to the player
-                volumeSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
-                    if (player != null) {
-                        player.setVolume(newValue.doubleValue() / 100);
-                    }
-                });
-
-                // Make sure the player has a playback rate of 1 (normal speed)
-                player.setRate(1.0); // Explicitly setting the playback rate to 1.0
-            } else {
-                System.out.println("No file selected.");
+        if (file != null) {
+            Media media = new Media(file.toURI().toString());
+            if (player != null) {
+                player.stop();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+            player = new MediaPlayer(media);
+            mediaView.setMediaPlayer(player);
+
+            // Bind volume slider
+            volumeSlider.setValue(50); // Default volume
+            player.volumeProperty().bind(volumeSlider.valueProperty().divide(100));
+
+            // Update progress slider as video plays
+            player.currentTimeProperty().addListener((obs, oldTime, newTime) -> {
+                if (!progressSlider.isValueChanging()) {
+                    progressSlider.setValue(newTime.toSeconds());
+                }
+            });
+
+            // Seek when progress slider is moved
+            progressSlider.setOnMouseReleased(e -> {
+                if (player.getMedia() != null) {
+                    player.seek(Duration.seconds(progressSlider.getValue()));
+                }
+            });
+
+            // Set progress slider max to video duration
+            player.setOnReady(() -> {
+                progressSlider.setMax(player.getMedia().getDuration().toSeconds());
+                setMediaViewScale(1.0); // Default to 100% scale when a new video is loaded
+            });
+
+            player.play();
         }
     }
 
-
-    // This method will play the current media when the Play button is clicked
     @FXML
     void play(ActionEvent event) {
         if (player != null) {
-            System.out.println("Attempting to play media..."); // Debugging the play method
-            if (player.getStatus() == MediaPlayer.Status.PAUSED || player.getStatus() == MediaPlayer.Status.STOPPED) {
-                // Check if the player was paused or stopped and then play
-                player.play(); // Play the media
-                System.out.println("Media is now playing.");
-            } else if (player.getStatus() == MediaPlayer.Status.READY) {
-                // If the media is ready but hasn't been played yet, start playing
-                player.play();
-                System.out.println("Media is now playing.");
-            } else {
-                System.out.println("Player is already playing.");
-            }
-        } else {
-            System.out.println("Player is not initialized or no media loaded.");
+            player.play();
+        }
+    }
+
+    @FXML
+    void pause(ActionEvent event) {
+        if (player != null) {
+            player.pause();
         }
     }
 
     @FXML
     void playPause(ActionEvent event) {
         if (player != null) {
-            System.out.println("Attempting to toggle media...");
-
-            // If the player is in PAUSED or STOPPED state, play the media
-            if (player.getStatus() == MediaPlayer.Status.PAUSED || player.getStatus() == MediaPlayer.Status.STOPPED) {
-                // If the media was paused or stopped, we play it
-                player.play();
-                System.out.println("Media is now playing.");
-            }
-            // If the player is already playing, pause the media
-            else if (player.getStatus() == MediaPlayer.Status.PLAYING) {
+            if (player.getStatus() == MediaPlayer.Status.PLAYING) {
                 player.pause();
-                System.out.println("Media paused.");
-            }
-            // If the player is in READY state, start playing
-            else if (player.getStatus() == MediaPlayer.Status.READY) {
+            } else {
                 player.play();
-                System.out.println("Media is now playing.");
             }
-            // Add a general case to log if something unexpected happens
-            else {
-                System.out.println("Unexpected player state: " + player.getStatus());
-            }
-        } else {
-            System.out.println("Player is not initialized or no media loaded.");
         }
     }
 
-
-    // This method will pause the current media
-    @FXML
-    void pause(ActionEvent event) {
-        if (player != null) {
-            player.pause(); // Pause the media
-            System.out.println("Media paused.");
-        } else {
-            System.out.println("Player is not initialized.");
-        }
-    }
-
-    // This method is a placeholder for a previous song action
-    @FXML
-    void previous(ActionEvent event) {
-        System.out.println("Previous button clicked");
-        // Add your logic to go to the previous song
-    }
-
-    // This method is a placeholder for a next song action
-    @FXML
-    void next(ActionEvent event) {
-        System.out.println("Next button clicked");
-        // Add your logic to go to the next song
-    }
-
-    // This method will forward the media by 10 seconds
     @FXML
     void forward(ActionEvent event) {
         if (player != null) {
-            Duration currentTime = player.getCurrentTime();
-            Duration seekTime = currentTime.add(Duration.seconds(10));
-
-            // Ensure seek time doesn't go beyond media duration
-            if (seekTime.greaterThan(player.getMedia().getDuration())) {
-                seekTime = player.getMedia().getDuration();
-            }
-
-            player.seek(seekTime);
-            System.out.println("Media forwarded by 10 seconds.");
-            if (player.getStatus() != MediaPlayer.Status.PLAYING) {
-                player.play(); // Ensure audio plays after seeking
-            }
-        } else {
-            System.out.println("Player is not initialized.");
+            player.seek(player.getCurrentTime().add(Duration.seconds(10)));
         }
     }
 
-    // This method will backward the media by 10 seconds
     @FXML
     void backward(ActionEvent event) {
         if (player != null) {
-            Duration currentTime = player.getCurrentTime();
-            Duration seekTime = currentTime.subtract(Duration.seconds(10));
+            player.seek(player.getCurrentTime().subtract(Duration.seconds(10)));
+        }
+    }
 
-            // Ensure seek time doesn't go before the beginning
-            if (seekTime.lessThan(Duration.ZERO)) {
-                seekTime = Duration.ZERO;
-            }
+    @FXML
+    void updateScale() {
+        // Get the value of the scale slider
+        double scaleFactor = scaleSlider.getValue();
 
-            player.seek(seekTime);
-            System.out.println("Media rewound by 10 seconds.");
-            if (player.getStatus() != MediaPlayer.Status.PLAYING) {
-                player.play(); // Ensure audio plays after seeking
-            }
-        } else {
-            System.out.println("Player is not initialized.");
+        // Make the change less sensitive by multiplying by a smaller constant factor
+        scaleFactor = 0.25 + scaleFactor * 0.25; // This will map the scale from 0.5 to 2.0, but with more gradual changes
+
+        // Apply the updated scale
+        setMediaViewScale(scaleFactor);
+    }
+
+
+    @FXML
+    void setScale(ActionEvent event) {
+        String scaleText = ((MenuItem) event.getSource()).getText(); // Get the text of the MenuItem
+        double scaleFactor = 1.0; // Default to 100%
+
+        // Adjust the scale based on the menu item clicked
+        switch (scaleText) {
+            case "50%":
+                scaleFactor = 0.5;
+                break;
+            case "100%":
+                scaleFactor = 1.0;
+                break;
+            case "150%":
+                scaleFactor = 1.5;
+                break;
+            case "200%":
+                scaleFactor = 2.0;
+                break;
+        }
+
+        setMediaViewScale(scaleFactor);
+    }
+
+    private void setMediaViewScale(double scaleFactor) {
+        if (mediaView != null && player != null && player.getMedia() != null) {
+            mediaView.setFitWidth(player.getMedia().getWidth() * scaleFactor);
+            mediaView.setFitHeight(player.getMedia().getHeight() * scaleFactor);
         }
     }
 }
