@@ -35,8 +35,8 @@ A simple yet powerful music and video player application built with **JavaFX**. 
    
 2. **Clone the Repository**:
    ```bash
-   git clone https://github.com/your-repo/music-player.git
-   cd music-player
+   git clone https://github.com/your-repo/JavaFX_VideoPlayer.git
+   cd JavaFX_VideoPlayer
    
 ---
 
